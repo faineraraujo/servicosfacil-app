@@ -272,6 +272,26 @@
   .order .acts { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
   .order .acts .btn { height: 32px; padding: 0 10px; font-size: 12px; }
 
+  /* Perfil */
+  .avatar { width: 64px; height: 64px; border-radius: 50%; background: var(--blue-600); color: #fff; display: grid; place-items: center; font-weight: 600; font-size: 22px; overflow: hidden; flex-shrink: 0; }
+  .avatar img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .avatar.xs { width: 22px; height: 22px; font-size: 10px; }
+  .avatar.sm { width: 40px; height: 40px; font-size: 15px; }
+  .profile-hero { display: flex; gap: 14px; align-items: center; }
+  .profile-hero .nm { font-size: 18px; font-weight: 600; }
+  .profile-hero .sub { font-size: 13px; color: var(--gray-500); }
+  .profile-hero .roles { display: flex; gap: 6px; margin-top: 6px; flex-wrap: wrap; }
+  .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+  .stat { border: 1px solid var(--gray-200); border-radius: 8px; padding: 10px 8px; text-align: center; }
+  .stat b { display: block; font-size: 20px; font-weight: 600; }
+  .stat span { font-size: 12px; color: var(--gray-500); }
+  .photo-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+  .photo-actions input[type="file"] { display: none; }
+  .link-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 10px 12px; border: 1px solid var(--gray-200); border-radius: 8px; background: var(--white); width: 100%; text-align: left; color: var(--gray-900); }
+  .link-row:hover { background: var(--gray-50); }
+  .link-row svg { color: var(--gray-400); }
+  .link-rows { display: grid; gap: 8px; }
+
   /* ---------- Celular: barra de abas, chips deslizantes, folhas ---------- */
   .tabbar { display: none; }
   @media (max-width: 639px) {
@@ -279,11 +299,13 @@
     header { position: sticky; top: 0; z-index: 25; }
     .hdr { padding-top: 12px; padding-bottom: 12px; }
     .hdr-actions { display: none; }
-    .tabbar { display: grid; grid-template-columns: repeat(4, 1fr); position: fixed; left: 0; right: 0; bottom: 0; z-index: 40; background: var(--white); border-top: 1px solid var(--gray-200); padding: 6px 4px calc(6px + env(safe-area-inset-bottom)); }
+    .tabbar { display: grid; grid-template-columns: repeat(5, 1fr); position: fixed; left: 0; right: 0; bottom: 0; z-index: 40; background: var(--white); border-top: 1px solid var(--gray-200); padding: 6px 4px calc(6px + env(safe-area-inset-bottom)); }
     .tabbar button { position: relative; border: 0; background: transparent; display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 6px 2px; font-size: 11px; font-weight: 500; color: var(--gray-500); border-radius: 8px; }
     .tabbar button svg { width: 22px; height: 22px; }
     .tabbar button[aria-current="page"] { color: var(--blue-600); }
     .tabbar button .badge { position: absolute; top: 0; left: calc(50% + 6px); padding: 0 5px; font-size: 10px; line-height: 15px; }
+    .tabbar button .avatar.xs { border: 2px solid transparent; box-sizing: content-box; }
+    .tabbar button[aria-current="page"] .avatar.xs { border-color: var(--blue-600); }
     .tabbar button.cta svg { width: 40px; height: 40px; padding: 9px; background: var(--blue-600); color: #fff; border-radius: 12px; margin-top: -14px; box-shadow: var(--shadow-md); }
     .tabs-list { display: flex; overflow-x: auto; gap: 6px; padding: 6px; scrollbar-width: none; -webkit-overflow-scrolling: touch; margin-bottom: 16px; }
     .tabs-list::-webkit-scrollbar { display: none; }
@@ -320,6 +342,7 @@
       <button class="btn outline sm" data-action="orders" id="ordersBtn"></button>
       <button class="btn outline sm" data-action="agenda" id="agendaBtn"></button>
       <button class="btn outline sm" data-action="offer" id="offerBtn"></button>
+      <button class="btn outline sm" data-action="profile" id="profileBtn"></button>
     </div>
   </div>
 </header>
@@ -452,7 +475,9 @@ function ratingOf(s) {
 const state = { mode: 'loading', me: null, q: '', cat: 'Todos', loc: '', price: 'Todos', dialog: null, services: {}, requests: {}, reviews: {}, agenda: {} };
 let db = null;
 const LS_KEY = 'servicosfacil.store.v1';
-function loadMe() { try { const m = JSON.parse(localStorage.getItem('servicosfacil.me') || 'null'); if (m && m.uid) return m; } catch {} const m = { uid: uid('u'), name: '', phone: '', email: '' }; saveMe(m); return m; }
+function loadMe() { try { const m = JSON.parse(localStorage.getItem('servicosfacil.me') || 'null'); if (m && m.uid) return m; } catch {} const m = { uid: uid('u'), name: '', phone: '', email: '', city: '', photo: '' }; saveMe(m); return m; }
+const initials = n => (n || '').trim().split(/\s+/).filter(Boolean).slice(0, 2).map(w => w[0].toUpperCase()).join('') || '?';
+const avatarHTML = (cls = '') => state.me.photo ? `<span class="avatar ${cls}"><img src="${state.me.photo}" alt=""></span>` : `<span class="avatar ${cls}">${state.me.name ? esc(initials(state.me.name)) : I.user.replace('class="i"', 'class="i" style="width:55%;height:55%"')}</span>`;
 function saveMe(m) { state.me = m; try { localStorage.setItem('servicosfacil.me', JSON.stringify(m)); } catch {} }
 function localSave() { try { localStorage.setItem(LS_KEY, JSON.stringify({ services: state.services, requests: state.requests, reviews: state.reviews, agenda: state.agenda })); } catch {} }
 async function put(col, doc) {
@@ -513,13 +538,15 @@ function render() {
   $('#ordersBtn').innerHTML = `${I.list} <span class="lbl">Meus pedidos</span>${pend ? ` <span class="badge blue">${pend}</span>` : ''}`;
   const todayN = Object.values(state.requests).filter(r => r.providerUid === state.me.uid && r.date === todayISO() && ['aguardando', 'confirmado'].includes(r.status)).length;
   $('#agendaBtn').innerHTML = `${I.calendar} <span class="lbl">Agenda</span>${todayN ? ` <span class="badge green">${todayN} hoje</span>` : ''}`;
+  $('#profileBtn').innerHTML = `${avatarHTML('xs')} <span class="lbl">${state.me.name ? esc(state.me.name.split(' ')[0]) : 'Perfil'}</span>`;
   const cur = state.dialog ? state.dialog.type : 'home';
-  const tabOn = t => (cur === t || (t === 'home' && !['orders', 'agenda', 'offer'].includes(cur))) ? 'page' : 'false';
+  const tabOn = t => (cur === t || (t === 'home' && !['orders', 'agenda', 'offer', 'profile'].includes(cur))) ? 'page' : 'false';
   $('#tabbar').innerHTML = `
     <button type="button" data-action="home" aria-current="${tabOn('home')}">${I.home}<span>Início</span></button>
     <button type="button" data-action="orders" aria-current="${tabOn('orders')}">${I.list}<span>Pedidos</span>${pend ? `<span class="badge blue">${pend}</span>` : ''}</button>
     <button type="button" class="cta" data-action="offer" aria-current="${tabOn('offer')}">${I.plus}<span>Anunciar</span></button>
-    <button type="button" data-action="agenda" aria-current="${tabOn('agenda')}">${I.calendar}<span>Agenda</span>${todayN ? `<span class="badge green">${todayN}</span>` : ''}</button>`;
+    <button type="button" data-action="agenda" aria-current="${tabOn('agenda')}">${I.calendar}<span>Agenda</span>${todayN ? `<span class="badge green">${todayN}</span>` : ''}</button>
+    <button type="button" data-action="profile" aria-current="${tabOn('profile')}">${avatarHTML('xs')}<span>Perfil</span></button>`;
   renderLocDD();
   renderDialog();
 }
@@ -556,7 +583,7 @@ function renderDialog() {
   const d = state.dialog; const root = $('#dialogRoot');
   if (!d) { root.innerHTML = ''; document.body.style.overflow = ''; return; }
   document.body.style.overflow = 'hidden';
-  const map = { details: dlgDetails, request: dlgRequest, offer: dlgOffer, orders: dlgOrders, review: dlgReview, confirm: dlgConfirm, agenda: dlgAgenda, feedback: dlgFeedback };
+  const map = { details: dlgDetails, request: dlgRequest, offer: dlgOffer, orders: dlgOrders, review: dlgReview, confirm: dlgConfirm, agenda: dlgAgenda, feedback: dlgFeedback, profile: dlgProfile };
   root.innerHTML = map[d.type] ? map[d.type](d) : '';
   if (d.type === 'request' && d.step === 'pay' && (d.method || 'pix') === 'pix' && !d.paying) drawQR(d.pixCode);
 }
@@ -729,6 +756,42 @@ function dlgAgenda(d) {
     ${upcoming.length ? `<div class="sect"><h3>Próximos serviços</h3>${upcoming.map(r => `<div class="slot-row"><div class="t tnum">${fmtDate(r.date).slice(0, 5)}<div class="sub">${r.time || ''}</div></div><div><div style="font-weight:500">${esc(r.serviceTitle)}</div><div class="sub">${esc(r.name)} · ${esc(r.address)}</div></div><div class="acts"><button class="btn outline" data-action="agDay" data-date="${r.date}">Ver dia</button></div></div>`).join('')}</div>` : ''}
   </div>`);
 }
+function dlgProfile(d) {
+  const f = d.form; const me = state.me.uid;
+  const reqs = Object.values(state.requests).filter(r => r.clientUid === me);
+  const ads = Object.values(state.services).filter(s => s.ownerUid === me);
+  const recv = Object.values(state.requests).filter(r => r.providerUid === me);
+  const revs = Object.values(state.reviews).filter(r => r.requestId && state.requests[r.requestId] && state.requests[r.requestId].clientUid === me).length;
+  const avg = (() => { const rs = Object.values(state.reviews).filter(r => ads.some(a => a.id === r.serviceId)); return rs.length ? (rs.reduce((a, r) => a + r.stars, 0) / rs.length).toFixed(1) : null; })();
+  const preview = f.photo ? `<span class="avatar"><img src="${f.photo}" alt=""></span>` : `<span class="avatar">${f.name ? esc(initials(f.name)) : I.user.replace('class="i"', 'class="i" style="width:55%;height:55%"')}</span>`;
+  return shell('Meu perfil', `<form class="space-y" data-form="profile" novalidate>
+    <div class="profile-hero">${preview}<div><div class="nm">${esc(f.name.trim() || 'Seu nome')}</div><div class="sub">${esc(f.city.trim() || 'Cidade não informada')}${f.phone.trim() ? ' · ' + esc(f.phone) : ''}</div><div class="roles">${reqs.length ? '<span class="badge blue">Cliente</span>' : ''}${ads.length ? '<span class="badge green">Prestador</span>' : ''}${!reqs.length && !ads.length ? '<span class="badge outline">Novo por aqui</span>' : ''}</div></div></div>
+    <div class="photo-actions"><label class="btn outline sm" for="pf_photo" style="cursor:pointer">${I.camera} ${f.photo ? 'Trocar foto' : 'Adicionar foto'}</label><input type="file" id="pf_photo" accept="image/*">${f.photo ? `<button type="button" class="btn ghost sm" data-action="removePhoto">Remover foto</button>` : ''}</div>
+    <div class="stats">
+      <div class="stat"><b class="tnum">${reqs.length}</b><span>pedidos feitos</span></div>
+      <div class="stat"><b class="tnum">${ads.length}</b><span>anúncios</span></div>
+      <div class="stat"><b class="tnum">${ads.length ? (avg || '—') : revs}</b><span>${ads.length ? 'nota média' : 'avaliações feitas'}</span></div>
+    </div>
+    <div class="cols-2">
+      <div class="field"><label class="label" for="pf_name">Nome completo</label><input class="input" id="pf_name" data-bind="name" value="${esc(f.name)}" placeholder="Como quer ser chamado"></div>
+      <div class="field"><label class="label" for="pf_phone">Telefone / WhatsApp</label><input class="input" id="pf_phone" data-bind="phone" inputmode="tel" value="${esc(f.phone)}" placeholder="(11) 99999-9999"></div>
+    </div>
+    <div class="cols-2">
+      <div class="field"><label class="label" for="pf_email">E-mail</label><input class="input" id="pf_email" type="email" data-bind="email" value="${esc(f.email)}"></div>
+      <div class="field"><label class="label" for="pf_city">Cidade</label><input class="input" id="pf_city" data-bind="city" list="locList2" value="${esc(f.city)}" placeholder="Cidade, UF"><datalist id="locList2">${allLocations().map(l => `<option value="${esc(l)}"></option>`).join('')}</datalist></div>
+    </div>
+    <p class="desc">Esses dados preenchem automaticamente seus pedidos e anúncios.</p>
+    ${d.error ? `<p class="err">${esc(d.error)}</p>` : ''}
+    <div class="form-actions" style="padding-top:0"><button type="submit" class="btn primary flex1">${I.check} Salvar perfil</button></div>
+    <div class="sect"><h3>Atalhos</h3><div class="link-rows">
+      <button type="button" class="link-row" data-action="orders"><span>${I.list} &nbsp;Meus pedidos${reqs.length ? ` <span class="badge outline">${reqs.length}</span>` : ''}</span>${I.chevR}</button>
+      <button type="button" class="link-row" data-action="ordersRecv"><span>${I.briefcase} &nbsp;Meus anúncios e pedidos recebidos${recv.length ? ` <span class="badge outline">${recv.length}</span>` : ''}</span>${I.chevR}</button>
+      <button type="button" class="link-row" data-action="agenda"><span>${I.calendar} &nbsp;Agenda</span>${I.chevR}</button>
+      <button type="button" class="link-row" data-action="feedback"><span>${I.star} &nbsp;Dar opinião sobre o app</span>${I.chevR}</button>
+    </div></div>
+    <div class="sect"><h3>Este aparelho</h3><p class="desc" style="margin-bottom:8px">ID ${esc(me)} · ${state.mode === 'db' ? 'dados compartilhados' : 'dados salvos só neste aparelho'}</p><button type="button" class="btn danger sm" data-action="resetDevice">Sair e limpar dados deste aparelho</button></div>
+  </form>`);
+}
 function feedbackText(d) {
   const n = d.stars || 0;
   return `Minha opinião sobre o app ServiçosFácil\nNota: ${n ? '★'.repeat(n) + '☆'.repeat(5 - n) + ` (${n}/5)` : 'sem nota'}\nO que achei: ${(d.text || '').trim() || '—'}\nO que faltou ou não funcionou: ${(d.missing || '').trim() || '—'}\nAparelho: ${navigator.userAgent.includes('iPhone') ? 'iPhone' : navigator.userAgent.includes('Android') ? 'Android' : 'Computador'}`;
@@ -764,6 +827,13 @@ const actions = {
   cat(el) { state.cat = el.dataset.cat; render(); },
   home() { if (state.dialog && state.dialog.paying) return; state.dialog = null; render(); window.scrollTo({ top: 0, behavior: 'smooth' }); },
   feedback() { openDialog({ type: 'feedback', stars: 0, text: '', missing: '' }); },
+  profile() { const m = state.me; openDialog({ type: 'profile', form: { name: m.name || '', phone: m.phone || '', email: m.email || '', city: m.city || '', photo: m.photo || '' } }); },
+  removePhoto() { state.dialog.form.photo = ''; render(); },
+  ordersRecv() { openDialog({ type: 'orders', tab: 'recv' }); },
+  resetDevice() {
+    openDialog({ type: 'confirm', title: 'Limpar dados deste aparelho', text: 'Isso apaga seu perfil e, nesta versão de teste, os pedidos e anúncios salvos neste aparelho. O app volta ao estado inicial.', ok: 'Limpar e sair', danger: true,
+      onOk: () => { try { localStorage.removeItem('servicosfacil.me'); if (state.mode !== 'db') localStorage.removeItem(LS_KEY); } catch {} location.reload(); } });
+  },
   fbStar(el) { state.dialog.stars = Number(el.dataset.n); render(); },
   fbCopy() { const t = feedbackText(state.dialog); navigator.clipboard?.writeText(t).then(() => { state.dialog.copied = true; render(); }).catch(() => toast('Não foi possível copiar. Use o botão do WhatsApp.')); },
   close() { if (state.dialog && state.dialog.paying) return; closeDialog(); },
@@ -813,7 +883,7 @@ const actions = {
   ordersTab(el) { state.dialog.tab = el.dataset.tab; render(); },
   offer() {
     const m = state.me;
-    openDialog({ type: 'offer', form: { title: '', provider: m.name || '', phone: m.phone || '', category: 'Limpeza', location: 'São Paulo, SP', price: '', availability: AVAIL[0], description: '' } });
+    openDialog({ type: 'offer', form: { title: '', provider: m.name || '', phone: m.phone || '', category: 'Limpeza', location: m.city || 'São Paulo, SP', price: '', availability: AVAIL[0], description: '' } });
   },
   editOffer(el) { const s = state.services[el.dataset.id]; if (!s) return; openDialog({ type: 'offer', editing: s.id, form: { title: s.title, provider: s.provider, phone: s.phone, category: s.category, location: s.location, price: String(s.price), availability: s.availability, description: s.description } }); },
   cancelReq(el) { const r = state.requests[el.dataset.id]; if (!r) return; openDialog({ type: 'confirm', title: 'Cancelar solicitação', text: `Cancelar "${r.serviceTitle}" em ${fmtDate(r.date)}? O valor de ${money(r.price)} será estornado.`, ok: 'Cancelar solicitação', danger: true, onOk: () => { put('requests', { ...r, status: 'cancelado' }); toast('Solicitação cancelada. Estorno solicitado.'); openDialog({ type: 'orders', tab: 'meus' }); } }); },
@@ -831,6 +901,14 @@ const actions = {
   },
 };
 const forms = {
+  profile() {
+    const d = state.dialog; const f = d.form; d.error = '';
+    if (!f.name.trim()) d.error = 'Informe seu nome.';
+    else if (f.email.trim() && !/^\S+@\S+\.\S+$/.test(f.email.trim())) d.error = 'E-mail inválido.';
+    if (d.error) return render();
+    saveMe({ ...state.me, name: f.name.trim(), phone: f.phone.trim(), email: f.email.trim(), city: f.city.trim(), photo: f.photo || '' });
+    closeDialog(); toast('Perfil salvo.');
+  },
   request() {
     const d = state.dialog; const f = d.form; d.error = '';
     if (!f.name.trim()) d.error = 'Informe seu nome completo.';
@@ -874,11 +952,23 @@ document.addEventListener('input', e => {
   if (el.id === 'loc') { state.loc = el.value; showLocDD(true); render(); return; }
   if (el.id === 'price') { state.price = el.value; render(); return; }
   if (el.dataset.bind && state.dialog) {
-    const d = state.dialog; const target = (d.type === 'request' && d.step === 'form') || d.type === 'offer' ? d.form : d;
+    const d = state.dialog; const target = (d.type === 'request' && d.step === 'form') || d.type === 'offer' || d.type === 'profile' ? d.form : d;
     if (el.dataset.bind === 'cardNumber') el.value = el.value.replace(/\D/g, '').slice(0, 19).replace(/(\d{4})(?=\d)/g, '$1 ');
     if (el.dataset.bind === 'cardExp') el.value = el.value.replace(/\D/g, '').slice(0, 4).replace(/(\d{2})(?=\d)/, '$1/');
     target[el.dataset.bind] = el.value;
   }
+});
+document.addEventListener('change', e => {
+  if (e.target.id !== 'pf_photo' || !e.target.files || !e.target.files[0]) return;
+  const file = e.target.files[0]; const img = new Image(); const url = URL.createObjectURL(file);
+  img.onload = () => {
+    const S = 192; const c = document.createElement('canvas'); c.width = S; c.height = S; const ctx = c.getContext('2d');
+    const r = Math.max(S / img.width, S / img.height); const w = img.width * r, h = img.height * r;
+    ctx.drawImage(img, (S - w) / 2, (S - h) / 2, w, h); URL.revokeObjectURL(url);
+    if (state.dialog && state.dialog.type === 'profile') { state.dialog.form.photo = c.toDataURL('image/jpeg', 0.82); render(); }
+  };
+  img.onerror = () => { URL.revokeObjectURL(url); toast('Não foi possível ler essa imagem.'); };
+  img.src = url;
 });
 document.addEventListener('keydown', e => {
   if (e.key === 'Escape') { if (!$('#locDD').hidden) { showLocDD(false); return; } if (state.dialog && !state.dialog.paying) closeDialog(); }
